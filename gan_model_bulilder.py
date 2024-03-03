@@ -25,7 +25,7 @@ class CustomDataset(Dataset):
 
         return image
 
-# تعریف معماری شبکه Generator
+# Define Generator network architecture
 class Generator(nn.Module):
     def __init__(self, latent_dim, img_shape):
         super(Generator, self).__init__()
@@ -33,13 +33,13 @@ class Generator(nn.Module):
             nn.Linear(latent_dim, 128),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(128, 256),
-            nn.BatchNorm1d(256, 0.8),
+            nn.BatchNorm1d(256),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(256, 512),
-            nn.BatchNorm1d(512, 0.8),
+            nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(512, 1024),
-            nn.BatchNorm1d(1024, 0.8),
+            nn.BatchNorm1d(1024),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(1024, int(torch.prod(torch.tensor(img_shape)))),
             nn.Tanh()
@@ -51,7 +51,7 @@ class Generator(nn.Module):
         img = img.view(img.size(0), *self.img_shape)
         return img
 
-# تعریف معماری شبکه Discriminator
+# Define Discriminator network architecture
 class Discriminator(nn.Module):
     def __init__(self, img_shape):
         super(Discriminator, self).__init__()
@@ -69,29 +69,25 @@ class Discriminator(nn.Module):
         validity = self.model(img_flat)
         return validity
 
-# تعریف تابعی برای آموزش مدل GAN
+# Define function for training the GAN model
 def train_gan(device, generator, discriminator, dataloader, latent_dim, epochs, lr, b1, b2):
-    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # انتخاب تابع هزینه و بهینه‌ساز
     adversarial_loss = nn.BCELoss()
     generator_optimizer = torch.optim.Adam(generator.parameters(), lr=lr, betas=(b1, b2))
     discriminator_optimizer = torch.optim.Adam(discriminator.parameters(), lr=lr, betas=(b1, b2))
 
     for epoch in range(epochs):
-        for imgs in tqdm(dataloader):
-            # تبدیل تصاویر به بردارهای تصادفی
-            # در تابع train_gan
-            imgs = imgs.view(imgs.size(0), -1).to(device)
+        for imgs, _ in tqdm(dataloader):
+            imgs = imgs.to(device)
             real_labels = torch.ones(imgs.size(0), 1).to(device)
             fake_labels = torch.zeros(imgs.size(0), 1).to(device)
 
-            # آموزش Discriminator بر داده‌های واقعی
+            generator = generator.to(device)
+            discriminator = discriminator.to(device)
+
             discriminator_optimizer.zero_grad()
-            real_loss = adversarial_loss(discriminator(imgs), real_labels)
+            real_loss = adversarial_loss(discriminator(imgs.view(imgs.size(0), -1)), real_labels)
             real_loss.backward()
 
-            # آموزش Discriminator بر داده‌های مصنوعی
             z = torch.randn(imgs.size(0), latent_dim).to(device)
             fake_imgs = generator(z)
             fake_loss = adversarial_loss(discriminator(fake_imgs.detach()), fake_labels)
@@ -99,16 +95,14 @@ def train_gan(device, generator, discriminator, dataloader, latent_dim, epochs, 
 
             discriminator_optimizer.step()
 
-            # آموزش Generator
             generator_optimizer.zero_grad()
             z = torch.randn(imgs.size(0), latent_dim).to(device)
             gen_imgs = generator(z)
-            gen_loss = adversarial_loss(discriminator(gen_imgs), real_labels)
+            gen_loss = adversarial_loss(discriminator(gen_imgs.view(gen_imgs.size(0), -1)), real_labels)
             gen_loss.backward()
             generator_optimizer.step()
 
-
-# تعریف تابع برای آماده‌سازی داده‌ها
+# Define function for preparing data
 def prepare_data(data_path, batch_size):
     transform = transforms.Compose([
         transforms.ToTensor(),
@@ -118,35 +112,28 @@ def prepare_data(data_path, batch_size):
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     return dataloader
 
-# تعریف پارامترهای مورد نیاز
+# Define GAN hyperparameters
 latent_dim = 100
-img_shape = (3, 256, 256)  # تصاویر را بر اساس اندازه دلخواه خود تعیین کنید
+img_shape = (3, 256, 256)
 lr = 0.0002
 b1 = 0.5
 b2 = 0.999
 batch_size = 64
-epochs = 10
+epochs = 100
 
-device = torch.device("cpu")
+# Choose the appropriate device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Initialize the Generator and Discriminator models
 generator = Generator(latent_dim, img_shape).to(device)
 discriminator = Discriminator(img_shape).to(device)
 
+# Prepare the data loader
+faces_dataset_path = '/home/skyboy/w/python/new_face/celeba_hq_256/'
+dataloader = prepare_data(faces_dataset_path, batch_size)
 
-# آماده‌سازی داده‌ها
-# تعریف تبدیل‌ها برای تصاویر
-transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,))
-])
-
-# تعریف دیتاست سفارشی
-custom_dataset = CustomDataset(data_dir="/home/skyboy/w/python/facer-generator/celeba_hq_256", transform=transform)
-
-# تعریف دیتالودر برای دیتاست سفارشی
-dataloader = torch.utils.data.DataLoader(custom_dataset, batch_size=batch_size, shuffle=True)
-
-# آموزش مدل GAN
+# Train the GAN model
 train_gan(device, generator, discriminator, dataloader, latent_dim, epochs, lr, b1, b2)
 
-# ذخیره مدل آموزش دیده
+# Save the trained Generator model
 torch.save(generator.state_dict(), "generator.pth")
