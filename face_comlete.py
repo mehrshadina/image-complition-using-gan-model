@@ -11,20 +11,16 @@ import numpy as np
 
 class AdvancedGenerator(nn.Module):
     def __init__(self, latent_dim, img_shape):
-        super(AdvancedGenerator, self).__init__()
-
+        super(Generator, self).__init__()
         self.model = nn.Sequential(
-            nn.Linear(latent_dim, 128),
-            nn.ReLU(inplace=True),
-            nn.Linear(128, 256),
-            nn.BatchNorm1d(256, 0.8),
-            nn.ReLU(inplace=True),
+            nn.Linear(latent_dim, 256),
+            nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(256, 512),
-            nn.BatchNorm1d(512, 0.8),
-            nn.ReLU(inplace=True),
-           nn.Linear(512, 1024),
-            nn.BatchNorm1d(1024, 0.8),
-            nn.ReLU(inplace=True),
+            nn.BatchNorm1d(512, 0.9),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Linear(512, 1024),
+            nn.BatchNorm1d(1024, 0.9),
+            nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(1024, int(torch.prod(torch.tensor(img_shape)))),
             nn.Tanh()
         )
