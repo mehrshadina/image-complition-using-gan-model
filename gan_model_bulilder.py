@@ -128,7 +128,7 @@ generator = Generator(latent_dim, img_shape).to(device)
 discriminator = Discriminator(img_shape).to(device)
 
 # Prepare the data loader
-faces_dataset_path = '/home/skyboy/w/python/new_face/celeba_hq_256/'
+faces_dataset_path = os.getcwd() + '/celeba_hq_256/'
 dataloader = prepare_data(faces_dataset_path, batch_size)
 
 # Train the GAN model

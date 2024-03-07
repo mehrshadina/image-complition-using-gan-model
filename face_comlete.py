@@ -94,7 +94,7 @@ def correct_generated_color(input_image, generated_image, skin_mask):
 
 # تابع برای جایگزین کردن نواحی سفید با تصویر تولید شده توسط مدل GAN
 def replace_white_regions(input_image_path, output_image_path, generator, latent_dim):
-    device = torch.device("cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     input_image = cv2.imread(input_image_path)
 
     # شناسایی نواحی پوست
