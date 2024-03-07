@@ -119,7 +119,16 @@ def replace_white_regions(input_image_path, output_image_path, generator, latent
     
     # جایگزین کردن نواحی سفید با تصویر تولید شده
     output_image = np.copy(input_image)
-    output_image[skin_mask] = generated_np[skin_mask]
+    shift_amount = 10
+
+    # ابعاد تصویر
+    height, width, _ = input_image.shape
+
+    # حلقه بر روی هر سطر تصویر
+    for y in range(height - shift_amount):
+    # جایگزینی سطر i با سطر i + shift_amount
+        output_image[y, skin_mask[y]] = generated_np[y + shift_amount, skin_mask[y]]
+
     # نمایش و ذخیره تصویر تغییر یافته
     cv2.imwrite(output_image_path, output_image)
 
