@@ -30,13 +30,16 @@ class Generator(nn.Module):
     def __init__(self, latent_dim, img_shape):
         super(Generator, self).__init__()
         self.model = nn.Sequential(
-            nn.Linear(latent_dim, 256),
+            nn.Linear(latent_dim, 128),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Linear(128, 256),
+            nn.BatchNorm1d(256),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(256, 512),
-            nn.BatchNorm1d(512, 0.9),
+            nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(512, 1024),
-            nn.BatchNorm1d(1024, 0.9),
+            nn.BatchNorm1d(1024),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(1024, int(torch.prod(torch.tensor(img_shape)))),
             nn.Tanh()
@@ -47,7 +50,6 @@ class Generator(nn.Module):
         img = self.model(z)
         img = img.view(img.size(0), *self.img_shape)
         return img
-
 
 # Define Discriminator network architecture
 class Discriminator(nn.Module):
@@ -69,8 +71,7 @@ class Discriminator(nn.Module):
 
 # Define function for training the GAN model
 def train_gan(device, generator, discriminator, dataloader, latent_dim, epochs, lr, b1, b2):
-    adversarial_loss = nn.L1Loss()
-
+    adversarial_loss = nn.BCELoss()
     generator_optimizer = torch.optim.Adam(generator.parameters(), lr=lr, betas=(b1, b2))
     discriminator_optimizer = torch.optim.Adam(discriminator.parameters(), lr=lr, betas=(b1, b2))
 

@@ -94,12 +94,12 @@ def correct_generated_color(input_image, generated_image, skin_mask):
 
 # تابع برای جایگزین کردن نواحی سفید با تصویر تولید شده توسط مدل GAN
 def replace_white_regions(input_image_path, output_image_path, generator, latent_dim):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
     input_image = cv2.imread(input_image_path)
 
     # شناسایی نواحی پوست
     skin_mask = find_white_mask(input_image_path)
-    print(skin_mask)
+    #print(skin_mask)
     
     # تولید تصویر جدید با استفاده از مدل GAN
     with torch.no_grad():
@@ -109,7 +109,6 @@ def replace_white_regions(input_image_path, output_image_path, generator, latent
     generated_np = (generated_image.squeeze(0).permute(1, 2, 0).cpu().numpy() + 1) / 2.0 * 255.0
     #generated_np = generated_np[:input_image.shape[0], :input_image.shape[1], :]
     generated_np = cv2.cvtColor(generated_np, cv2.COLOR_BGR2RGB)
-    cv2.imwrite('sss.jpg', generated_np)
     # تصحیح رنگ تصویر تولید شده با توجه به ناحیه پوستی
     #corrected_generated_image = correct_generated_color(input_image, generated_image, skin_mask)
     
@@ -137,7 +136,7 @@ latent_dim = 100
 img_shape = (3, 256, 256)
 
 # Load the Generator model
-generator = AdvancedGenerator(latent_dim, img_shape)
+generator = Generator(latent_dim, img_shape)
 generator.load_state_dict(torch.load('generator.pth'))
 generator.eval()
 
