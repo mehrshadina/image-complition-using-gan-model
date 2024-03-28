@@ -16,27 +16,27 @@ To run this project, you need to have Python installed on your system. You also 
 - Pillow
 
 You can install these dependencies using pip:
-
+```
   pip install torch torchvision numpy Pillow
-
+```
 ## Usage
 
 1. Clone this repository to your local machine:
-
+```
   git clone https://github.com/mehrshadina/face-completion-gan.git
-
+```
 
 2. Navigate to the project directory:
-
+```
   cd face-completion-gan
-
+```
 
 3. Place your incomplete face images in the `input` directory.
 
 4. Run the completion script:
-
+```
   python complete_faces.py
-
+```
 
 5. The completed faces will be saved in the `output` directory.
 
